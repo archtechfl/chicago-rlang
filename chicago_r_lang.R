@@ -453,6 +453,7 @@ write.csv(crime_murder_beat_stats, file = "murder_beat_stats.csv")
 
 # Theft under 500
 crime_theft_five_hundred <- data.frame(crime_specific_list["THEFT - $500 AND UNDER"])
+colnames(crime_theft_five_hundred)[11] <- "Beat"
 crime_theft_five_hundred_beats <- split(crime_theft_five_hundred,crime_theft_five_hundred$THEFT....500.AND.UNDER.Beat)
 crime_theft_five_hundred_by_beat <- sort(sapply(crime_theft_five_hundred_beats, NROW), decreasing = TRUE)
 crime_theft_five_hundred_beat_stats <- data.frame(crime_theft_five_hundred_by_beat)
@@ -477,11 +478,14 @@ write_json(crime_rob_gun_beat_stats, path = "rob_gun_stats.json")
 
 # JSON generator
 
-test_index <- 0
-
 generateJSON<- function(listItem){
   temp_frame <- data.frame(listItem)
-  temp_frame_beats <- split(temp_frame,temp_frame$ROBBERY...ARMED..HANDGUN.Beat)
+  crime_name <- (head(temp_frame, 1)$crime_full)
+  file_name <- make.names(crime_name, unique = TRUE)
+  syntax_correct_file_name <- lapply(file_name, function(x) {
+    gsub("\\.+", "-", x)
+  })
+  temp_frame_beats <- split(temp_frame,temp_frame$Beat)
   temp_frame_beats_by_beat <- sort(sapply(temp_frame_beats, NROW), decreasing = TRUE)
   temp_frame_beat_stats <- data.frame(temp_frame_beats_by_beat)
   
@@ -489,13 +493,11 @@ generateJSON<- function(listItem){
   colnames(temp_frame_beat_stats) <- c("crimes")
   temp_frame_beat_stats$beat_num <- as.numeric(row.names(temp_frame_beat_stats))
   
-  path <- paste(c("test", (test_index + 1), ".json"), collapse = "")
+  path <- paste(c("DATA-", syntax_correct_file_name, ".json"), collapse = "")
   
   write_json(temp_frame_beat_stats, path = path)
   
-};
+}
 
-test <- "HOMICIDE...FIRST.DEGREE.MURDER.Beat"
-
-test_name <- gsub('/.*[beat]/g', 'Beat', "HOMICIDE...FIRST.DEGREE.MURDER.Beat", fixed=TRUE)
+lapply(crime_specific_list, FUN = generateJSON)
 
