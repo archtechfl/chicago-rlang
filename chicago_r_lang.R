@@ -474,3 +474,21 @@ colnames(crime_rob_gun_beat_stats) <- c("crimes")
 crime_rob_gun_beat_stats$beat_num <- as.numeric(row.names(crime_rob_gun_beat_stats))
 
 write_json(crime_rob_gun_beat_stats, path = "rob_gun_stats.json")
+
+# JSON generator
+
+generateJSON <- function(listItem){
+  temp_frame <- data.frame(listItem)
+  temp_frame_beats <- split(temp_frame,temp_frame$ROBBERY...ARMED..HANDGUN.Beat)
+  temp_frame_beats_by_beat <- sort(sapply(temp_frame_beats, NROW), decreasing = TRUE)
+  temp_frame_beat_stats <- data.frame(temp_frame_beats_by_beat)
+  
+  # Prepare data frame for export
+  colnames(temp_frame_beat_stats) <- c("crimes")
+  temp_frame_beat_stats$beat_num <- as.numeric(row.names(temp_frame_beat_stats))
+  
+  write_json(temp_frame_beat_stats, path = "rob_gun_stats.json")
+  
+}
+
+apply(crime_specific_list,generateJSON)
