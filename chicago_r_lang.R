@@ -2,6 +2,8 @@ ridership <- read.csv("~/training/CTA/CTA_Ridership.csv", header = T)
 ridership <- ridership[!grepl("Madison/Wabash", ridership$stationname),]
 summary(ridership$rides)
 
+write.csv(ridership, file = "dom_beat_stats.csv")
+
 hist(ridership$rides, breaks="FD")
 describe(ridership$rides)
 
