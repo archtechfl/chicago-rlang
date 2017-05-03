@@ -322,7 +322,7 @@ boxplot(bldg_address$tally,
 
 # Crime 2015 complete analysis
 
-crime_2015 <- read.csv("~/training/CTA/Crimes-2015.csv", header = T)
+crime_2015 <- read.csv("Crimes-2015.csv", header = T)
 
 # Split crimes according to type
 
@@ -370,6 +370,30 @@ barplot(crimes_2015_by_beat, las=2)
 
 crimes_beat_stats <- data.frame(crimes_2015_by_beat)
 
+# Export total crimes per beat
+
+colnames(crimes_beat_stats) <- c("crimes")
+crimes_beat_stats$beat_num <- as.numeric(row.names(crimes_beat_stats))
+
+path <- "data_total_crimes_beat.json"
+
+write_json(crimes_beat_stats, path = path)
+
+# Export total crimes by district
+
+crime_2015_district <- split(crime_2015,crime_2015$District)
+
+crimes_2015_by_district <- sort(sapply(crime_2015_district, NROW), decreasing = TRUE)
+
+crimes_district_stats <- data.frame(crimes_2015_by_district)
+
+colnames(crimes_district_stats) <- c("crimes")
+crimes_district_stats$district <- as.numeric(row.names(crimes_district_stats))
+
+path <- "data_total_crimes_district.json"
+
+write_json(crimes_district_stats, path = path)
+
 # By Location type
 
 crime_2015_loc_type <- split(crime_2015,crime_2015$Location.Description)
@@ -404,6 +428,8 @@ crime_specific <- crime_2015
 crime_specific$crime_full <- paste(crime_2015$Primary.Type,"-",crime_2015$Description)
 
 crime_specific_list <- split(crime_specific,crime_specific$crime_full)
+
+crime_primary_list <- split(crime_2015,crime_2015$Primary.Type)
 
 crime_specific_list_totals <- sort(sapply(crime_specific_list, NROW), decreasing = TRUE)
 
@@ -499,5 +525,74 @@ generateJSON<- function(listItem){
   
 }
 
+generateJSON_primary<- function(listItem){
+  temp_frame <- data.frame(listItem)
+  crime_name <- (head(temp_frame, 1)$Primary.Type)
+  file_name <- make.names(crime_name, unique = TRUE)
+  syntax_correct_file_name <- lapply(file_name, function(x) {
+    gsub("\\.+", "-", x)
+  })
+  temp_frame_beats <- split(temp_frame,temp_frame$Beat)
+  temp_frame_beats_by_beat <- sort(sapply(temp_frame_beats, NROW), decreasing = TRUE)
+  temp_frame_beat_stats <- data.frame(temp_frame_beats_by_beat)
+  
+  # Prepare data frame for export
+  colnames(temp_frame_beat_stats) <- c("crimes")
+  temp_frame_beat_stats$beat_num <- as.numeric(row.names(temp_frame_beat_stats))
+  
+  path <- paste(c("DATA-", syntax_correct_file_name, ".json"), collapse = "")
+  
+  write_json(temp_frame_beat_stats, path = path)
+  
+}
+
 lapply(crime_specific_list, FUN = generateJSON)
 
+lapply(crime_primary_list, FUN = generateJSON_primary)
+
+generateJSON_district_primary<- function(listItem){
+  temp_frame <- data.frame(listItem)
+  crime_name <- (head(temp_frame, 1)$Primary.Type)
+  file_name <- make.names(crime_name, unique = TRUE)
+  syntax_correct_file_name <- lapply(file_name, function(x) {
+    gsub("\\.+", "-", x)
+  })
+  temp_frame_district <- split(temp_frame,temp_frame$District)
+  temp_frame_crimes_by_district <- sort(sapply(temp_frame_district, NROW), decreasing = TRUE)
+  temp_frame_district_stats <- data.frame(temp_frame_crimes_by_district)
+  
+  # Prepare data frame for export
+  colnames(temp_frame_district_stats) <- c("crimes")
+  temp_frame_district_stats$district <- as.numeric(row.names(temp_frame_district_stats))
+  
+  path <- paste(c("DATA-DISTRICT-", syntax_correct_file_name, ".json"), collapse = "")
+  
+  write_json(temp_frame_district_stats, path = path)
+  
+}
+
+lapply(crime_primary_list, FUN = generateJSON_district_primary)
+
+
+generateJSON_districts<- function(listItem){
+  temp_frame <- data.frame(listItem)
+  crime_name <- (head(temp_frame, 1)$crime_full)
+  file_name <- make.names(crime_name, unique = TRUE)
+  syntax_correct_file_name <- lapply(file_name, function(x) {
+    gsub("\\.+", "-", x)
+  })
+  temp_frame_districts <- split(temp_frame,temp_frame$District)
+  temp_frame_by_district <- sort(sapply(temp_frame_districts, NROW), decreasing = TRUE)
+  temp_frame_district_stats <- data.frame(temp_frame_by_district)
+  
+  # Prepare data frame for export
+  colnames(temp_frame_district_stats) <- c("crimes")
+  temp_frame_district_stats$district <- as.numeric(row.names(temp_frame_district_stats))
+  
+  path <- paste(c("DATA-district-desc-", syntax_correct_file_name, ".json"), collapse = "")
+  
+  write_json(temp_frame_district_stats, path = path)
+  
+}
+
+lapply(crime_specific_list, FUN = generateJSON_districts)
